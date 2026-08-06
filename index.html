@@ -93,7 +93,7 @@
       <div style="flex:0 0 220px;">
         <div class="card">
           <div class="img-box">
-            <img class="before-img" src="Images/before_headshot.png" alt="Before">
+            <img class="before-img" id="before-img" src="Images/before_headshot.png" alt="Before">
             <img class="after-img" id="after-img" src="Images/after_headshot.png" alt="After">
           </div>
           <div class="card-footer">
@@ -242,7 +242,7 @@ const params = [
   { name: 'Skin retouch', start: 0, end: 45, startDesc: 'None', endDesc: 'Natural smoothing' },
   { name: 'Sharpness', start: 50, end: 30, startDesc: 'Default', endDesc: 'Subtle enhancement' },
   { name: 'Background', locked: true, startDesc: 'Original photo', endDesc: 'Studio backdrop', tag: 'Replace' },
-  { name: 'Outfit', locked: true, options: true, startDesc: 'As photographed', endDesc: 'Navy blazer added' }
+  { name: 'Outfit', locked: true, options: true, startDesc: 'As photographed', endDesc: 'Black blazer added' }
 ];
 
 const paramsContainer = document.getElementById('params');
@@ -254,7 +254,7 @@ params.forEach((p, i) => {
       <div class="param-top">
         <span class="param-name">${p.name}</span>
         <div class="option-row">
-          <button class="option-btn" id="opt-navy-${i}" onclick="selectOutfit(${i}, 'navy')">Navy</button>
+          <button class="option-btn" id="opt-black-${i}" onclick="selectOutfit(${i}, 'black')">Black</button>
           <button class="option-btn" id="opt-white-${i}" onclick="selectOutfit(${i}, 'white')">White</button>
         </div>
       </div>
@@ -290,8 +290,9 @@ function updateImageFilter() {
   const brightness = 0.85 + (lightingVal / 100) * 0.4;
   const glow = 1 + (retouchVal / 100) * 0.25;
   const contrast = 1 - (retouchVal / 100) * 0.12;
-  const afterImg = document.getElementById('after-img');
-  afterImg.style.filter = `brightness(${brightness}) saturate(${glow}) contrast(${contrast})`;
+  const filterStr = `brightness(${brightness}) saturate(${glow}) contrast(${contrast})`;
+  document.getElementById('before-img').style.filter = filterStr;
+  document.getElementById('after-img').style.filter = filterStr;
 }
 
 params.forEach((p, i) => {
@@ -306,11 +307,11 @@ params.forEach((p, i) => {
 
 function selectOutfit(i, choice) {
   const desc = document.getElementById(`desc-${i}`);
-  document.getElementById(`opt-navy-${i}`).classList.toggle('selected', choice === 'navy');
+  document.getElementById(`opt-black-${i}`).classList.toggle('selected', choice === 'black');
   document.getElementById(`opt-white-${i}`).classList.toggle('selected', choice === 'white');
-  desc.textContent = choice === 'navy' ? 'Navy blazer added' : 'White blazer added';
+  desc.textContent = choice === 'black' ? 'Black blazer added' : 'White blazer added';
   desc.classList.add('changed');
-  const outfitImages = { navy: 'Images/after_headshot.png', white: 'Images/white_headshot.png' };
+  const outfitImages = { black: 'Images/after_headshot.png', white: 'Images/white_headshot.png' };
   document.getElementById('after-img').src = outfitImages[choice];
   updateImageFilter();
 }
@@ -340,12 +341,12 @@ document.getElementById('reset').addEventListener('click', () => {
     document.getElementById(`out-${i}`).textContent = p.start + '%';
   });
   document.getElementById('after-img').classList.remove('shown');
-  document.getElementById('after-img').style.filter = 'none';
   document.getElementById('result-label').textContent = 'Original';
   document.getElementById('result-check').style.display = 'none';
   document.getElementById('params-tag').textContent = 'baseline';
-  document.getElementById(`opt-navy-${params.findIndex(p => p.options)}`).classList.remove('selected');
+  document.getElementById(`opt-black-${params.findIndex(p => p.options)}`).classList.remove('selected');
   document.getElementById(`opt-white-${params.findIndex(p => p.options)}`).classList.remove('selected');
+  updateImageFilter();
 });
 
 document.getElementById('apply-btn').addEventListener('click', () => {
@@ -358,7 +359,7 @@ document.getElementById('apply-btn').addEventListener('click', () => {
     desc.textContent = p.endDesc;
     desc.classList.add('changed');
     if (p.options) {
-      document.getElementById(`opt-navy-${i}`).classList.add('selected');
+      document.getElementById(`opt-black-${i}`).classList.add('selected');
       return;
     }
     if (p.locked) return;
