@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Style editor mockup</title>
+<style>
+  :root {
+    --surface-0: #f6f5f2;
+    --surface-1: #efeee9;
+    --surface-2: #ffffff;
+    --text-primary: #1a1a18;
+    --text-secondary: #6b6a64;
+    --text-muted: #9a9990;
+    --text-accent: #185fa5;
+    --text-success: #3b6d11;
+    --border: rgba(0,0,0,0.10);
+    --border-strong: rgba(0,0,0,0.20);
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: var(--surface-0);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 3rem 1.5rem;
+  }
+  .wrap { max-width: 680px; margin: 0 auto; }
+  button {
+    font-family: inherit;
+    font-size: 14px;
+    border: 0.5px solid var(--border-strong);
+    background: var(--surface-2);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    cursor: pointer;
+  }
+  button:hover { background: var(--surface-1); }
+  input[type="text"], textarea {
+    font-family: inherit;
+    font-size: 13px;
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    background: rgba(255,255,255,0.6);
+    padding: 8px 10px;
+  }
+  input[type="range"] { width: 100%; }
+  .tabs { display: flex; gap: 4px; border-bottom: 0.5px solid var(--border); margin-bottom: 1.25rem; }
+  .tab-btn {
+    border: none; border-bottom: 2px solid transparent; border-radius: 0;
+    background: transparent; padding: 10px 4px; font-size: 14px; font-weight: 500;
+    color: var(--text-secondary);
+  }
+  .tab-btn.active { border-bottom-color: var(--text-primary); color: var(--text-primary); }
+  .card { background: var(--surface-1); border-radius: 12px; border: 0.5px solid var(--border); overflow: hidden; }
+  .img-box { aspect-ratio: 3/4; background: var(--surface-2); position: relative; overflow: hidden; }
+  .img-box img { width: 100%; height: 100%; object-fit: cover; display: block; position: absolute; top: 0; left: 0; transition: opacity 0.6s ease; }
+  .img-box img.before-img { opacity: 1; }
+  .img-box img.after-img { opacity: 0; }
+  .img-box img.after-img.shown { opacity: 1; }
+  .card-footer { padding: 10px 12px; border-top: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--text-secondary); }
+  .param-row { margin-bottom: 14px; }
+  .param-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+  .param-name { font-size: 14px; font-weight: 500; }
+  .param-val { font-size: 13px; color: var(--text-secondary); }
+  .param-desc { font-size: 12px; color: var(--text-muted); transition: color 0.3s ease; }
+  .param-desc.changed { color: var(--text-accent); }
+  .lock-tag { font-size: 12px; color: var(--text-accent); cursor: pointer; }
+  .option-row { display: flex; gap: 6px; }
+  .option-btn {
+    font-family: inherit; font-size: 12px; padding: 6px 12px;
+    border: 0.5px solid var(--border-strong); border-radius: var(--radius);
+    background: var(--surface-2); color: var(--text-secondary); cursor: pointer;
+  }
+  .option-btn.selected { border-color: var(--text-accent); color: var(--text-accent); background: rgba(24,95,165,0.08); }
+  .ref-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 12px; margin-bottom: 1.25rem; }
+  .ref-cell img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--radius); border: 0.5px solid var(--border); margin-bottom: 6px; display: block; background: var(--surface-1); }
+  .ref-cell input { width: 100%; font-size: 12px; padding: 6px 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="tabs">
+    <button class="tab-btn active" id="tab-prompt" onclick="showTab('prompt')">AI Control</button>
+    <button class="tab-btn" id="tab-ref" onclick="showTab('ref')">Reference</button>
+  </div>
+
+  <!-- TAB 1: PROMPT -->
+  <div id="panel-prompt">
+    <div style="display:flex; gap:1.5rem; align-items:flex-start; flex-wrap:wrap;">
+
+      <div style="flex:0 0 220px;">
+        <div class="card">
+          <div class="img-box">
+            <img class="before-img" src="before_headshot.png" alt="Before">
+            <img class="after-img" id="after-img" src="after_headshot.png" alt="After">
+          </div>
+          <div class="card-footer">
+            <span id="result-label">Original</span>
+            <span id="result-check" style="color:var(--text-success); display:none;">✓</span>
+          </div>
+        </div>
+
+        <div style="margin-top:10px;">
+          <textarea id="prompt-input" rows="3" placeholder="e.g. Turn this into a professional headshot" style="width:100%; resize:vertical;"></textarea>
+          <button id="apply-btn" style="width:100%; margin-top:8px;">Apply changes →</button>
+        </div>
+      </div>
+
+      <div style="flex:1; min-width:320px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+          <span style="font-size:13px; color:var(--text-secondary);">Values applied to this result</span>
+          <span style="font-size:12px; color:var(--text-muted);" id="params-tag">baseline</span>
+        </div>
+
+        <div id="params"></div>
+
+        <div style="display:flex; gap:8px; margin-top:1.25rem;">
+          <button id="regen" style="flex:1;">Apply changed values only</button>
+          <button id="reset">Reset</button>
+        </div>
+        <p style="font-size:12px; color:var(--text-muted); margin:8px 0 0;">
+          Untouched attributes stay as they are
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: REFERENCE -->
+  <div id="panel-ref" style="display:none;">
+    <div style="display:flex; gap:1.5rem; align-items:flex-start; flex-wrap:wrap;">
+
+      <div style="flex:0 0 220px;">
+        <p style="font-size:12px; color:var(--text-muted); margin:0 0 6px;">Original</p>
+        <div class="card">
+          <div class="img-box">
+            <img class="before-img" src="original_reference.png" alt="Original">
+            <img class="after-img" id="ref-after-img" src="reference_final.png" alt="Result">
+          </div>
+          <div class="card-footer">
+            <span id="ref-result-label">Original</span>
+            <span id="ref-result-check" style="color:var(--text-success); display:none;">✓</span>
+          </div>
+        </div>
+
+        <div style="margin-top:10px;">
+          <textarea id="ref-prompt-input" rows="3" placeholder="e.g. Apply reference images to the original image" style="width:100%; resize:vertical;"></textarea>
+          <button id="ref-apply-btn" style="width:100%; margin-top:8px;">Apply reference →</button>
+        </div>
+      </div>
+
+      <div style="flex:1; min-width:320px;">
+        <p style="font-size:13px; color:var(--text-secondary); margin:0 0 8px;">References (up to 3)</p>
+        <div class="ref-grid" id="ref-grid"></div>
+
+        <div style="border-top:0.5px solid var(--border); padding-top:14px; margin-bottom:1.25rem;">
+          <p style="font-size:13px; color:var(--text-secondary); margin:0 0 12px;">Basic edit tools</p>
+
+          <div class="param-row">
+            <div class="param-top">
+              <span class="param-name">Text</span>
+              <button class="option-btn" style="display:flex; align-items:center; gap:4px;">+ Edit text</button>
+            </div>
+          </div>
+
+          <div class="param-row">
+            <div class="param-top">
+              <span class="param-name">Rotate</span>
+              <div class="option-row">
+                <button class="option-btn" title="Rotate left">↺</button>
+                <button class="option-btn" title="Rotate right">↻</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="param-row">
+            <span class="param-name" style="display:block; margin-bottom:8px;">Filters</span>
+            <div class="option-row" style="flex-wrap:wrap; gap:16px;">
+              <button class="option-btn filter-btn selected">Original</button>
+              <button class="option-btn filter-btn">Warm</button>
+              <button class="option-btn filter-btn">Cool</button>
+              <button class="option-btn filter-btn">B&W</button>
+              <button class="option-btn filter-btn">Vivid</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:8px; margin-top:1.25rem;">
+          <button id="ref-regen-btn" style="flex:1;">Apply changed values only</button>
+          <button id="ref-reset-btn">Reset</button>
+        </div>
+        <p style="font-size:12px; color:var(--text-muted); margin:8px 0 0;">
+          Untouched attributes stay as they are
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+  });
+});
+
+document.getElementById('ref-apply-btn').addEventListener('click', () => {
+  document.getElementById('ref-after-img').classList.add('shown');
+  document.getElementById('ref-result-label').textContent = 'Result';
+  document.getElementById('ref-result-check').style.display = 'inline';
+});
+
+document.getElementById('ref-regen-btn').addEventListener('click', () => {
+  document.getElementById('ref-after-img').classList.add('shown');
+  document.getElementById('ref-result-label').textContent = 'Result';
+  document.getElementById('ref-result-check').style.display = 'inline';
+});
+
+document.getElementById('ref-reset-btn').addEventListener('click', () => {
+  document.getElementById('ref-after-img').classList.remove('shown');
+  document.getElementById('ref-result-label').textContent = 'Original';
+  document.getElementById('ref-result-check').style.display = 'none';
+  document.getElementById('ref-prompt-input').value = '';
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelector('.filter-btn').classList.add('selected');
+});
+</script>
+
+<script>
+function showTab(name) {
+  document.getElementById('panel-prompt').style.display = name === 'prompt' ? 'block' : 'none';
+  document.getElementById('panel-ref').style.display = name === 'ref' ? 'block' : 'none';
+  document.getElementById('tab-prompt').classList.toggle('active', name === 'prompt');
+  document.getElementById('tab-ref').classList.toggle('active', name === 'ref');
+}
+
+const params = [
+  { name: 'Lighting', start: 20, end: 72, startDesc: 'Neutral', endDesc: 'Soft, flattering' },
+  { name: 'Skin retouch', start: 0, end: 45, startDesc: 'None', endDesc: 'Natural smoothing' },
+  { name: 'Sharpness', start: 50, end: 30, startDesc: 'Default', endDesc: 'Subtle enhancement' },
+  { name: 'Background', locked: true, startDesc: 'Original photo', endDesc: 'Studio backdrop', tag: 'Replace' },
+  { name: 'Outfit', locked: true, options: true, startDesc: 'As photographed', endDesc: 'Navy blazer added' }
+];
+
+const paramsContainer = document.getElementById('params');
+params.forEach((p, i) => {
+  const row = document.createElement('div');
+  row.className = 'param-row';
+  if (p.options) {
+    row.innerHTML = `
+      <div class="param-top">
+        <span class="param-name">${p.name}</span>
+        <div class="option-row">
+          <button class="option-btn" id="opt-navy-${i}" onclick="selectOutfit(${i}, 'navy')">Navy</button>
+          <button class="option-btn" id="opt-white-${i}" onclick="selectOutfit(${i}, 'white')">White</button>
+        </div>
+      </div>
+      <span class="param-desc" id="desc-${i}">${p.startDesc}</span>
+    `;
+  } else if (p.locked) {
+    row.innerHTML = `
+      <div class="param-top">
+        <span class="param-name">${p.name}</span>
+        <span class="lock-tag">${p.tag}</span>
+      </div>
+      <span class="param-desc" id="desc-${i}">${p.startDesc}</span>
+    `;
+  } else {
+    row.innerHTML = `
+      <div class="param-top">
+        <span class="param-name">${p.name}</span>
+        <span class="param-val" id="out-${i}">${p.start}%</span>
+      </div>
+      <input type="range" min="0" max="100" step="1" value="${p.start}" id="slider-${i}">
+      <span class="param-desc" id="desc-${i}">${p.startDesc}</span>
+    `;
+  }
+  paramsContainer.appendChild(row);
+});
+
+const lightingIdx = params.findIndex(p => p.name === 'Lighting');
+const retouchIdx = params.findIndex(p => p.name === 'Skin retouch');
+
+function updateImageFilter() {
+  const lightingVal = Number(document.getElementById(`slider-${lightingIdx}`).value);
+  const retouchVal = Number(document.getElementById(`slider-${retouchIdx}`).value);
+  const brightness = 0.85 + (lightingVal / 100) * 0.4;
+  const glow = 1 + (retouchVal / 100) * 0.25;
+  const contrast = 1 - (retouchVal / 100) * 0.12;
+  const afterImg = document.getElementById('after-img');
+  afterImg.style.filter = `brightness(${brightness}) saturate(${glow}) contrast(${contrast})`;
+}
+
+params.forEach((p, i) => {
+  if (p.locked || p.options) return;
+  const slider = document.getElementById(`slider-${i}`);
+  const out = document.getElementById(`out-${i}`);
+  slider.addEventListener('input', () => {
+    out.textContent = slider.value + '%';
+    updateImageFilter();
+  });
+});
+
+function selectOutfit(i, choice) {
+  const desc = document.getElementById(`desc-${i}`);
+  document.getElementById(`opt-navy-${i}`).classList.toggle('selected', choice === 'navy');
+  document.getElementById(`opt-white-${i}`).classList.toggle('selected', choice === 'white');
+  desc.textContent = choice === 'navy' ? 'Navy blazer added' : 'White blazer added';
+  desc.classList.add('changed');
+  const outfitImages = { navy: 'after_headshot.png', white: 'white_headshot.png' };
+  document.getElementById('after-img').src = outfitImages[choice];
+  updateImageFilter();
+}
+
+function animateSlider(i, from, to) {
+  const slider = document.getElementById(`slider-${i}`);
+  const out = document.getElementById(`out-${i}`);
+  const steps = 20;
+  let step = 0;
+  const interval = setInterval(() => {
+    step++;
+    const v = Math.round(from + (to - from) * (step / steps));
+    slider.value = v;
+    out.textContent = v + '%';
+    updateImageFilter();
+    if (step >= steps) clearInterval(interval);
+  }, 20);
+}
+
+document.getElementById('reset').addEventListener('click', () => {
+  params.forEach((p, i) => {
+    const desc = document.getElementById(`desc-${i}`);
+    desc.textContent = p.startDesc;
+    desc.classList.remove('changed');
+    if (p.locked) return;
+    document.getElementById(`slider-${i}`).value = p.start;
+    document.getElementById(`out-${i}`).textContent = p.start + '%';
+  });
+  document.getElementById('after-img').classList.remove('shown');
+  document.getElementById('after-img').style.filter = 'none';
+  document.getElementById('result-label').textContent = 'Original';
+  document.getElementById('result-check').style.display = 'none';
+  document.getElementById('params-tag').textContent = 'baseline';
+  document.getElementById(`opt-navy-${params.findIndex(p => p.options)}`).classList.remove('selected');
+  document.getElementById(`opt-white-${params.findIndex(p => p.options)}`).classList.remove('selected');
+});
+
+document.getElementById('apply-btn').addEventListener('click', () => {
+  document.getElementById('after-img').classList.add('shown');
+  document.getElementById('result-label').textContent = 'Result';
+  document.getElementById('result-check').style.display = 'inline';
+  document.getElementById('params-tag').textContent = 'extracted from output';
+  params.forEach((p, i) => {
+    const desc = document.getElementById(`desc-${i}`);
+    desc.textContent = p.endDesc;
+    desc.classList.add('changed');
+    if (p.options) {
+      document.getElementById(`opt-navy-${i}`).classList.add('selected');
+      return;
+    }
+    if (p.locked) return;
+    const slider = document.getElementById(`slider-${i}`);
+    animateSlider(i, Number(slider.value), p.end);
+  });
+});
+
+const refFiles = ['background.png', 'texture.png', 'b.png'];
+const refExamples = ['e.g. background', 'e.g. texture', 'e.g. lighting'];
+const refGrid = document.getElementById('ref-grid');
+refFiles.forEach((file, i) => {
+  const cell = document.createElement('div');
+  cell.className = 'ref-cell';
+  cell.innerHTML = `
+    <img src="${file}" alt="Reference ${i + 1}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+    <div style="display:none; aspect-ratio:1; align-items:center; justify-content:center; background:var(--surface-1); border:1px dashed var(--border-strong); border-radius:var(--radius); color:var(--text-muted); margin-bottom:6px;">+</div>
+    <input type="text" placeholder="${refExamples[i]}">
+  `;
+  refGrid.appendChild(cell);
+});
+</script>
+</body>
+</html>
