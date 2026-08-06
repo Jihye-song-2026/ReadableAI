@@ -93,8 +93,8 @@
       <div style="flex:0 0 220px;">
         <div class="card">
           <div class="img-box">
-            <img class="before-img" src="before_headshot.png" alt="Before">
-            <img class="after-img" id="after-img" src="after_headshot.png" alt="After">
+            <img class="before-img" src="Images/before_headshot.png" alt="Before">
+            <img class="after-img" id="after-img" src="Images/after_headshot.png" alt="After">
           </div>
           <div class="card-footer">
             <span id="result-label">Original</span>
@@ -135,8 +135,8 @@
         <p style="font-size:12px; color:var(--text-muted); margin:0 0 6px;">Original</p>
         <div class="card">
           <div class="img-box">
-            <img class="before-img" src="original_reference.png" alt="Original">
-            <img class="after-img" id="ref-after-img" src="reference_final.png" alt="Result">
+            <img class="before-img" src="Images/original_reference.png" alt="Original">
+            <img class="after-img" id="ref-after-img" src="Images/reference_final.png" alt="Result">
           </div>
           <div class="card-footer">
             <span id="ref-result-label">Original</span>
@@ -310,7 +310,7 @@ function selectOutfit(i, choice) {
   document.getElementById(`opt-white-${i}`).classList.toggle('selected', choice === 'white');
   desc.textContent = choice === 'navy' ? 'Navy blazer added' : 'White blazer added';
   desc.classList.add('changed');
-  const outfitImages = { navy: 'after_headshot.png', white: 'white_headshot.png' };
+  const outfitImages = { navy: 'Images/after_headshot.png', white: 'Images/white_headshot.png' };
   document.getElementById('after-img').src = outfitImages[choice];
   updateImageFilter();
 }
@@ -367,7 +367,7 @@ document.getElementById('apply-btn').addEventListener('click', () => {
   });
 });
 
-const refFiles = ['background.png', 'texture.png', 'b.png'];
+const refFiles = ['Images/background.png', 'Images/texture.png', 'Images/b.png'];
 const refExamples = ['e.g. background', 'e.g. texture', 'e.g. lighting'];
 const refGrid = document.getElementById('ref-grid');
 refFiles.forEach((file, i) => {
