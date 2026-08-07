@@ -238,18 +238,29 @@ function showTab(name) {
 }
 
 const params = [
+  { name: 'Background', locked: true, backgroundOptions: true, startDesc: 'Original photo', endDesc: 'Studio backdrop, White' },
+  { name: 'Outfit', locked: true, options: true, startDesc: 'As photographed', endDesc: 'Black blazer added' },
   { name: 'Lighting', start: 20, end: 72, startDesc: 'Neutral', endDesc: 'Soft, flattering' },
   { name: 'Skin retouch', start: 0, end: 45, startDesc: 'None', endDesc: 'Natural smoothing' },
-  { name: 'Sharpness', start: 50, end: 30, startDesc: 'Default', endDesc: 'Subtle enhancement' },
-  { name: 'Background', locked: true, startDesc: 'Original photo', endDesc: 'Studio backdrop', tag: 'Replace' },
-  { name: 'Outfit', locked: true, options: true, startDesc: 'As photographed', endDesc: 'Black blazer added' }
+  { name: 'Sharpness', start: 50, end: 30, startDesc: 'Default', endDesc: 'Subtle enhancement' }
 ];
 
 const paramsContainer = document.getElementById('params');
 params.forEach((p, i) => {
   const row = document.createElement('div');
   row.className = 'param-row';
-  if (p.options) {
+  if (p.backgroundOptions) {
+    row.innerHTML = `
+      <div class="param-top">
+        <span class="param-name">${p.name}</span>
+        <div class="option-row">
+          <button class="option-btn" id="bg-opt-white-${i}" onclick="selectBackground(${i}, 'white')">White</button>
+          <button class="option-btn" id="bg-opt-gray-${i}" onclick="selectBackground(${i}, 'gray')">Gray</button>
+        </div>
+      </div>
+      <span class="param-desc" id="desc-${i}">${p.startDesc}</span>
+    `;
+  } else if (p.options) {
     row.innerHTML = `
       <div class="param-top">
         <span class="param-name">${p.name}</span>
@@ -264,7 +275,7 @@ params.forEach((p, i) => {
     row.innerHTML = `
       <div class="param-top">
         <span class="param-name">${p.name}</span>
-        <span class="lock-tag">${p.tag}</span>
+        <span class="lock-tag">${p.tag || ''}</span>
       </div>
       <span class="param-desc" id="desc-${i}">${p.startDesc}</span>
     `;
@@ -305,15 +316,41 @@ params.forEach((p, i) => {
   });
 });
 
+let currentOutfit = 'black';
+let currentBackground = 'white';
+
+const outfitBgImages = {
+  'black-white': 'Images/after_headshot_blacksuit_whitebackground.png',
+  'black-gray': 'Images/after_headshot_blacksuit-greybackground.png',
+  'white-white': 'Images/after_headshot_whitesuit_whitebackground.png',
+  'white-gray': 'Images/after_headshot_whitesuit_greybackground.png'
+};
+
+function updateCombinedImage() {
+  const key = `${currentOutfit}-${currentBackground}`;
+  document.getElementById('after-img').src = outfitBgImages[key];
+  updateImageFilter();
+}
+
+function selectBackground(i, choice) {
+  const desc = document.getElementById(`desc-${i}`);
+  document.getElementById(`bg-opt-white-${i}`).classList.toggle('selected', choice === 'white');
+  document.getElementById(`bg-opt-gray-${i}`).classList.toggle('selected', choice === 'gray');
+  const descText = { white: 'Studio backdrop, White', gray: 'Studio backdrop, Gray' };
+  desc.textContent = descText[choice];
+  desc.classList.add('changed');
+  currentBackground = choice;
+  updateCombinedImage();
+}
+
 function selectOutfit(i, choice) {
   const desc = document.getElementById(`desc-${i}`);
   document.getElementById(`opt-black-${i}`).classList.toggle('selected', choice === 'black');
   document.getElementById(`opt-white-${i}`).classList.toggle('selected', choice === 'white');
   desc.textContent = choice === 'black' ? 'Black blazer added' : 'White blazer added';
   desc.classList.add('changed');
-  const outfitImages = { black: 'Images/after_headshot.png', white: 'Images/white_headshot.png' };
-  document.getElementById('after-img').src = outfitImages[choice];
-  updateImageFilter();
+  currentOutfit = choice;
+  updateCombinedImage();
 }
 
 function animateSlider(i, from, to) {
@@ -346,6 +383,10 @@ document.getElementById('reset').addEventListener('click', () => {
   document.getElementById('params-tag').textContent = 'baseline';
   document.getElementById(`opt-black-${params.findIndex(p => p.options)}`).classList.remove('selected');
   document.getElementById(`opt-white-${params.findIndex(p => p.options)}`).classList.remove('selected');
+  document.getElementById(`bg-opt-white-${params.findIndex(p => p.backgroundOptions)}`).classList.remove('selected');
+  document.getElementById(`bg-opt-gray-${params.findIndex(p => p.backgroundOptions)}`).classList.remove('selected');
+  currentOutfit = 'black';
+  currentBackground = 'white';
   updateImageFilter();
 });
 
@@ -358,8 +399,16 @@ document.getElementById('apply-btn').addEventListener('click', () => {
     const desc = document.getElementById(`desc-${i}`);
     desc.textContent = p.endDesc;
     desc.classList.add('changed');
+    if (p.backgroundOptions) {
+      document.getElementById(`bg-opt-white-${i}`).classList.add('selected');
+      currentBackground = 'white';
+      updateCombinedImage();
+      return;
+    }
     if (p.options) {
       document.getElementById(`opt-black-${i}`).classList.add('selected');
+      currentOutfit = 'black';
+      updateCombinedImage();
       return;
     }
     if (p.locked) return;
