@@ -177,7 +177,7 @@
         <div class="card">
           <div class="img-box uploadable empty" id="ref-before-img-box">
             <img class="before-img" id="ref-before-img" alt="Original">
-            <img class="after-img" id="ref-after-img" src="reference_final.png" alt="Result" onerror="console.warn('[reference tab] failed to load:', this.src)">
+            <img class="after-img" id="ref-after-img" src="Images/reference_final.png" alt="Result" onerror="console.warn('[reference tab] failed to load:', this.src)">
             <div class="upload-overlay">
               <span id="ref-before-img-box-label"><span class="plus">+</span>Add your photo</span>
             </div>
@@ -273,9 +273,9 @@ function refreshRefBoxEmptyState() {
 
 // picks which pre-built result image to reveal, based on which reference slots are filled
 function pickReferenceResultImage() {
-  if (refSlotFilled[1]) return 'reference_final.png';   // texture added on top of background
-  if (refSlotFilled[0]) return 'reference_between.png'; // background only
-  return 'reference_final.png';                          // nothing uploaded — default demo result
+  if (refSlotFilled[1]) return 'Images/reference_final.png';   // texture added on top of background
+  if (refSlotFilled[0]) return 'Images/reference_between.png'; // background only
+  return 'Images/reference_final.png';                          // nothing uploaded — default demo result
 }
 
 document.getElementById('ref-apply-btn').addEventListener('click', () => {
@@ -310,7 +310,7 @@ document.getElementById('ref-reset-btn').addEventListener('click', () => {
 
   // wipe the uploaded original photo
   document.getElementById('ref-before-img').removeAttribute('src');
-  document.getElementById('ref-after-img').setAttribute('src', 'reference_final.png');
+  document.getElementById('ref-after-img').setAttribute('src', 'Images/reference_final.png');
   refMainUploadInput.value = '';
   refBeforeImgBox.classList.remove('has-custom');
   document.getElementById('ref-before-img-box-label').innerHTML = '<span class="plus">+</span>Add your photo';
