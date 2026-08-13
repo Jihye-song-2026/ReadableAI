@@ -551,14 +551,11 @@ const refSlotFilled = [false, false, false];
 refExamples.forEach((placeholderText, i) => {
   const cell = document.createElement('div');
   cell.className = 'ref-cell';
-  const label = placeholderText.replace('e.g. ', '');
-  const labelCap = label.charAt(0).toUpperCase() + label.slice(1);
   cell.innerHTML = `
-    <p style="font-size:11px; color:var(--text-muted); margin:0 0 4px; text-transform:uppercase; letter-spacing:0.02em;">${labelCap}</p>
     <img id="ref-img-${i}" alt="Reference ${i + 1}" style="display:none;">
     <div class="ref-placeholder" id="ref-placeholder-${i}" style="display:flex;">+ Add photo</div>
     <input type="file" accept="image/*" id="ref-file-${i}" style="display:none;">
-    <input type="text" placeholder="notes (optional)">
+    <input type="text" placeholder="${placeholderText}">
   `;
   refGrid.appendChild(cell);
 
