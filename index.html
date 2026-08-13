@@ -58,6 +58,7 @@
   .img-box img.before-img { opacity: 1; }
   .img-box img.after-img { opacity: 0; object-position: top; transform: scale(1.15); transform-origin: top center; }
   .img-box img.after-img.shown { opacity: 1; }
+  #ref-after-img { object-position: center; transform: scale(1); transform-origin: center; }
   .card-footer { padding: 10px 12px; border-top: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--text-secondary); }
   .param-row { margin-bottom: 14px; }
   .param-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
@@ -74,8 +75,42 @@
   }
   .option-btn.selected { border-color: var(--text-accent); color: var(--text-accent); background: rgba(24,95,165,0.08); }
   .ref-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 12px; margin-bottom: 1.25rem; }
-  .ref-cell img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--radius); border: 0.5px solid var(--border); margin-bottom: 6px; display: block; background: var(--surface-1); }
+  .ref-cell img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--radius); border: 0.5px solid var(--border); margin-bottom: 6px; display: block; background: var(--surface-1); cursor: pointer; }
+  .ref-cell .ref-placeholder { display:none; aspect-ratio:1; align-items:center; justify-content:center; background:var(--surface-1); border:1px dashed var(--border-strong); border-radius:var(--radius); color:var(--text-muted); margin-bottom:6px; cursor:pointer; font-size: 12px; text-align: center; padding: 6px; }
   .ref-cell input { width: 100%; font-size: 12px; padding: 6px 8px; }
+
+  /* click-to-upload overlay on the "original" image box */
+  .img-box.uploadable { cursor: pointer; }
+  .img-box.uploadable .upload-overlay {
+    position: absolute; inset: 0; z-index: 5;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.0); transition: background 0.2s ease;
+  }
+  .img-box.uploadable .upload-overlay span {
+    font-size: 12px; color: var(--text-secondary); background: rgba(255,255,255,0.9);
+    border: 0.5px solid var(--border-strong); border-radius: var(--radius);
+    padding: 6px 10px; opacity: 0; transition: opacity 0.2s ease;
+  }
+  .img-box.uploadable:hover .upload-overlay { background: rgba(0,0,0,0.25); }
+  .img-box.uploadable:hover .upload-overlay span { opacity: 1; }
+
+  /* the "before" photo is hidden until the user uploads their own; it never shows a default */
+  .img-box.uploadable .before-img { display: none; }
+  .img-box.uploadable.has-custom .before-img { display: block; }
+
+  /* empty state: nothing to show yet — no uploaded photo AND no applied result */
+  .img-box.uploadable.empty { border: 1px dashed var(--border-strong); background: var(--surface-1); }
+  .img-box.uploadable.empty .upload-overlay {
+    background: transparent; flex-direction: column; gap: 8px;
+  }
+  .img-box.uploadable.empty .upload-overlay span {
+    opacity: 1; background: transparent; border: none; padding: 0;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    color: var(--text-muted); font-size: 13px;
+  }
+  .img-box.uploadable.empty .upload-overlay .plus {
+    font-size: 28px; line-height: 1; color: var(--text-muted); font-weight: 300;
+  }
 </style>
 </head>
 <body>
@@ -88,14 +123,19 @@
 
   <!-- TAB 1: PROMPT -->
   <div id="panel-prompt">
+
     <div style="display:flex; gap:1.5rem; align-items:flex-start; flex-wrap:wrap;">
 
       <div style="flex:0 0 220px;">
         <div class="card">
-          <div class="img-box">
-            <img class="before-img" id="before-img" src="Images/before_headshot.png" alt="Before">
-            <img class="after-img" id="after-img" src="Images/after_headshot.png" alt="After">
+          <div class="img-box uploadable empty" id="before-img-box">
+            <img class="before-img" id="before-img" alt="Before">
+            <img class="after-img" id="after-img" alt="After">
+            <div class="upload-overlay">
+              <span id="before-img-box-label"><span class="plus">+</span>Add your photo</span>
+            </div>
           </div>
+          <input type="file" accept="image/*" id="main-upload" style="display:none;">
           <div class="card-footer">
             <span id="result-label">Original</span>
             <span id="result-check" style="color:var(--text-success); display:none;">✓</span>
@@ -129,15 +169,20 @@
 
   <!-- TAB 2: REFERENCE -->
   <div id="panel-ref" style="display:none;">
+
     <div style="display:flex; gap:1.5rem; align-items:flex-start; flex-wrap:wrap;">
 
       <div style="flex:0 0 220px;">
         <p style="font-size:12px; color:var(--text-muted); margin:0 0 6px;">Original</p>
         <div class="card">
-          <div class="img-box">
-            <img class="before-img" src="Images/original_reference.png" alt="Original">
-            <img class="after-img" id="ref-after-img" src="Images/reference_final.png" alt="Result">
+          <div class="img-box uploadable empty" id="ref-before-img-box">
+            <img class="before-img" id="ref-before-img" alt="Original">
+            <img class="after-img" id="ref-after-img" src="reference_final.png" alt="Result" onerror="console.warn('[reference tab] failed to load:', this.src)">
+            <div class="upload-overlay">
+              <span id="ref-before-img-box-label"><span class="plus">+</span>Add your photo</span>
+            </div>
           </div>
+          <input type="file" accept="image/*" id="ref-main-upload" style="display:none;">
           <div class="card-footer">
             <span id="ref-result-label">Original</span>
             <span id="ref-result-check" style="color:var(--text-success); display:none;">✓</span>
@@ -151,7 +196,7 @@
       </div>
 
       <div style="flex:1; min-width:320px;">
-        <p style="font-size:13px; color:var(--text-secondary); margin:0 0 8px;">References (up to 3)</p>
+        <p style="font-size:13px; color:var(--text-secondary); margin:0 0 8px;">References (up to 3) — click a tile to upload</p>
         <div class="ref-grid" id="ref-grid"></div>
 
         <div style="border-top:0.5px solid var(--border); padding-top:14px; margin-bottom:1.25rem;">
@@ -177,11 +222,11 @@
           <div class="param-row">
             <span class="param-name" style="display:block; margin-bottom:8px;">Filters</span>
             <div class="option-row" style="flex-wrap:wrap; gap:16px;">
-              <button class="option-btn filter-btn selected">Original</button>
-              <button class="option-btn filter-btn">Warm</button>
-              <button class="option-btn filter-btn">Cool</button>
-              <button class="option-btn filter-btn">B&W</button>
-              <button class="option-btn filter-btn">Vivid</button>
+              <button class="option-btn filter-btn selected" data-filter="original">Original</button>
+              <button class="option-btn filter-btn" data-filter="warm">Warm</button>
+              <button class="option-btn filter-btn" data-filter="cool">Cool</button>
+              <button class="option-btn filter-btn" data-filter="bw">B&W</button>
+              <button class="option-btn filter-btn" data-filter="vivid">Vivid</button>
             </div>
           </div>
         </div>
@@ -200,23 +245,57 @@
 </div>
 
 <script>
+// ---- filter presets for the Reference tab ----
+const filterPresets = {
+  original: 'none',
+  warm: 'sepia(0.25) saturate(1.2) brightness(1.03)',
+  cool: 'saturate(1.05) hue-rotate(-8deg) brightness(1.02)',
+  bw: 'grayscale(1) contrast(1.05)',
+  vivid: 'saturate(1.5) contrast(1.08)'
+};
+
 document.querySelectorAll('.filter-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
+    const preset = filterPresets[btn.dataset.filter] || 'none';
+    document.getElementById('ref-before-img').style.filter = preset;
+    document.getElementById('ref-after-img').style.filter = preset;
   });
 });
 
+function refreshRefBoxEmptyState() {
+  const box = document.getElementById('ref-before-img-box');
+  const afterShown = document.getElementById('ref-after-img').classList.contains('shown');
+  const hasCustom = box.classList.contains('has-custom');
+  box.classList.toggle('empty', !hasCustom && !afterShown);
+}
+
+// picks which pre-built result image to reveal, based on which reference slots are filled
+function pickReferenceResultImage() {
+  if (refSlotFilled[1]) return 'reference_final.png';   // texture added on top of background
+  if (refSlotFilled[0]) return 'reference_between.png'; // background only
+  return 'reference_final.png';                          // nothing uploaded — default demo result
+}
+
 document.getElementById('ref-apply-btn').addEventListener('click', () => {
+  const targetSrc = pickReferenceResultImage();
+  console.log('[reference tab] slots filled:', refSlotFilled, '→ loading:', targetSrc);
+  document.getElementById('ref-after-img').src = targetSrc;
   document.getElementById('ref-after-img').classList.add('shown');
   document.getElementById('ref-result-label').textContent = 'Result';
   document.getElementById('ref-result-check').style.display = 'inline';
+  refreshRefBoxEmptyState();
 });
 
 document.getElementById('ref-regen-btn').addEventListener('click', () => {
+  const targetSrc = pickReferenceResultImage();
+  console.log('[reference tab] slots filled:', refSlotFilled, '→ loading:', targetSrc);
+  document.getElementById('ref-after-img').src = targetSrc;
   document.getElementById('ref-after-img').classList.add('shown');
   document.getElementById('ref-result-label').textContent = 'Result';
   document.getElementById('ref-result-check').style.display = 'inline';
+  refreshRefBoxEmptyState();
 });
 
 document.getElementById('ref-reset-btn').addEventListener('click', () => {
@@ -226,6 +305,30 @@ document.getElementById('ref-reset-btn').addEventListener('click', () => {
   document.getElementById('ref-prompt-input').value = '';
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('selected'));
   document.querySelector('.filter-btn').classList.add('selected');
+  document.getElementById('ref-before-img').style.filter = 'none';
+  document.getElementById('ref-after-img').style.filter = 'none';
+
+  // wipe the uploaded original photo
+  document.getElementById('ref-before-img').removeAttribute('src');
+  document.getElementById('ref-after-img').setAttribute('src', 'reference_final.png');
+  refMainUploadInput.value = '';
+  refBeforeImgBox.classList.remove('has-custom');
+  document.getElementById('ref-before-img-box-label').innerHTML = '<span class="plus">+</span>Add your photo';
+
+  // wipe all 3 reference tiles (background / texture / lighting)
+  refSlotFilled.forEach((_, i) => {
+    refSlotFilled[i] = false;
+    const tileImg = document.getElementById(`ref-img-${i}`);
+    const tilePlaceholder = document.getElementById(`ref-placeholder-${i}`);
+    const tileFileInput = document.getElementById(`ref-file-${i}`);
+    tileImg.removeAttribute('src');
+    tileImg.style.display = 'none';
+    tilePlaceholder.style.display = 'flex';
+    tileFileInput.value = '';
+  });
+  document.querySelectorAll('.ref-cell input[type="text"]').forEach(input => input.value = '');
+
+  refreshRefBoxEmptyState();
 });
 </script>
 
@@ -240,9 +343,9 @@ function showTab(name) {
 const params = [
   { name: 'Background', locked: true, backgroundOptions: true, startDesc: 'Original photo', endDesc: 'Studio backdrop, White' },
   { name: 'Outfit', locked: true, options: true, startDesc: 'As photographed', endDesc: 'Black blazer added' },
-  { name: 'Lighting', start: 20, end: 72, startDesc: 'Neutral', endDesc: 'Soft, flattering' },
+  { name: 'Lighting', start: 0, end: 72, startDesc: 'Neutral', endDesc: 'Soft, flattering' },
   { name: 'Skin retouch', start: 0, end: 45, startDesc: 'None', endDesc: 'Natural smoothing' },
-  { name: 'Sharpness', start: 50, end: 30, startDesc: 'Default', endDesc: 'Subtle enhancement' }
+  { name: 'Sharpness', start: 0, end: 30, startDesc: 'Default', endDesc: 'Subtle enhancement' }
 ];
 
 const paramsContainer = document.getElementById('params');
@@ -319,6 +422,7 @@ params.forEach((p, i) => {
 let currentOutfit = 'black';
 let currentBackground = 'white';
 
+// default (built-in demo) combo images — used only when no custom photo has been uploaded
 const outfitBgImages = {
   'black-white': 'Images/after_headshot_blacksuit_whitebackground.png',
   'black-gray': 'Images/after_headshot_blacksuit_greybackground.png',
@@ -326,10 +430,20 @@ const outfitBgImages = {
   'white-gray': 'Images/after_headshot_whitesuit_greybackground.png'
 };
 
+// holds the uploaded photo's data URL once the user picks one (used only for the "before" thumbnail)
+let uploadedPhotoData = null;
+
 function updateCombinedImage() {
   const key = `${currentOutfit}-${currentBackground}`;
   document.getElementById('after-img').src = outfitBgImages[key];
   updateImageFilter();
+}
+
+// keeps the "+ Add your photo" placeholder visible only while there's truly nothing to show
+function refreshBoxEmptyState() {
+  const box = document.getElementById('before-img-box');
+  const afterShown = document.getElementById('after-img').classList.contains('shown');
+  box.classList.toggle('empty', !uploadedPhotoData && !afterShown);
 }
 
 function selectBackground(i, choice) {
@@ -388,6 +502,16 @@ document.getElementById('reset').addEventListener('click', () => {
   currentOutfit = 'black';
   currentBackground = 'white';
   updateImageFilter();
+
+  // wipe the uploaded "before" photo too — box goes fully back to empty
+  uploadedPhotoData = null;
+  document.getElementById('before-img').removeAttribute('src');
+  document.getElementById('after-img').removeAttribute('src');
+  mainUploadInput.value = '';
+  beforeImgBox.classList.remove('has-custom');
+  document.getElementById('before-img-box-label').innerHTML = '<span class="plus">+</span>Add your photo';
+  document.getElementById('prompt-input').value = '';
+  refreshBoxEmptyState();
 });
 
 document.getElementById('apply-btn').addEventListener('click', () => {
@@ -395,6 +519,7 @@ document.getElementById('apply-btn').addEventListener('click', () => {
   document.getElementById('result-label').textContent = 'Result';
   document.getElementById('result-check').style.display = 'inline';
   document.getElementById('params-tag').textContent = 'extracted from output';
+  refreshBoxEmptyState();
   params.forEach((p, i) => {
     const desc = document.getElementById(`desc-${i}`);
     desc.textContent = p.endDesc;
@@ -417,18 +542,84 @@ document.getElementById('apply-btn').addEventListener('click', () => {
   });
 });
 
-const refFiles = ['Images/background.png', 'Images/texture.png', 'Images/b.png'];
+// ---- reference tiles: click to upload, with a live "+" placeholder ----
 const refExamples = ['e.g. background', 'e.g. texture', 'e.g. lighting'];
 const refGrid = document.getElementById('ref-grid');
-refFiles.forEach((file, i) => {
+// index 0 = background, index 1 = texture, index 2 = lighting — tracks which slots have an uploaded image
+const refSlotFilled = [false, false, false];
+
+refExamples.forEach((placeholderText, i) => {
   const cell = document.createElement('div');
   cell.className = 'ref-cell';
+  const label = placeholderText.replace('e.g. ', '');
+  const labelCap = label.charAt(0).toUpperCase() + label.slice(1);
   cell.innerHTML = `
-    <img src="${file}" alt="Reference ${i + 1}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-    <div style="display:none; aspect-ratio:1; align-items:center; justify-content:center; background:var(--surface-1); border:1px dashed var(--border-strong); border-radius:var(--radius); color:var(--text-muted); margin-bottom:6px;">+</div>
-    <input type="text" placeholder="${refExamples[i]}">
+    <p style="font-size:11px; color:var(--text-muted); margin:0 0 4px; text-transform:uppercase; letter-spacing:0.02em;">${labelCap}</p>
+    <img id="ref-img-${i}" alt="Reference ${i + 1}" style="display:none;">
+    <div class="ref-placeholder" id="ref-placeholder-${i}" style="display:flex;">+ Add photo</div>
+    <input type="file" accept="image/*" id="ref-file-${i}" style="display:none;">
+    <input type="text" placeholder="notes (optional)">
   `;
   refGrid.appendChild(cell);
+
+  const img = cell.querySelector(`#ref-img-${i}`);
+  const placeholder = cell.querySelector(`#ref-placeholder-${i}`);
+  const fileInput = cell.querySelector(`#ref-file-${i}`);
+
+  const openPicker = () => fileInput.click();
+  img.addEventListener('click', openPicker);
+  placeholder.addEventListener('click', openPicker);
+
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      img.src = ev.target.result;
+      img.style.display = 'block';
+      placeholder.style.display = 'none';
+      refSlotFilled[i] = true;
+    };
+    reader.readAsDataURL(file);
+  });
+});
+
+// ---- main photo upload (Tab 1: AI Control) — click the image box itself ----
+const beforeImgBox = document.getElementById('before-img-box');
+const mainUploadInput = document.getElementById('main-upload');
+beforeImgBox.addEventListener('click', () => mainUploadInput.click());
+
+mainUploadInput.addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    uploadedPhotoData = ev.target.result;
+    document.getElementById('before-img').src = uploadedPhotoData;
+    beforeImgBox.classList.add('has-custom');
+    document.getElementById('before-img-box-label').textContent = 'Replace photo';
+    refreshBoxEmptyState();
+  };
+  reader.readAsDataURL(file);
+});
+
+// ---- main photo upload (Tab 2: Reference) — click the image box itself ----
+const refBeforeImgBox = document.getElementById('ref-before-img-box');
+const refMainUploadInput = document.getElementById('ref-main-upload');
+refBeforeImgBox.addEventListener('click', () => refMainUploadInput.click());
+
+refMainUploadInput.addEventListener('change', (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const dataUrl = ev.target.result;
+    document.getElementById('ref-before-img').src = dataUrl;
+    refBeforeImgBox.classList.add('has-custom');
+    document.getElementById('ref-before-img-box-label').textContent = 'Replace photo';
+    refreshRefBoxEmptyState();
+  };
+  reader.readAsDataURL(file);
 });
 </script>
 </body>
